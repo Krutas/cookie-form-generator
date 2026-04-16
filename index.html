@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Form Generator</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- TensorFlow.js and BodyPix -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0/dist/body-pix.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>🍪 Cookie Form Generator</h1>
+            <p>Upload an image, extract the shape, and generate a 3D printable cookie cutter</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Left Panel: Image Processing -->
+            <div class="left-panel">
+                <div class="panel-section">
+                    <h2>1. Import Image</h2>
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="imageInput" accept="image/*" hidden>
+                        <div class="upload-content">
+                            <span class="upload-icon">📤</span>
+                            <p>Click or drag image here</p>
+                            <small>Supports JPG, PNG, WebP</small>
+                        </div>
+                    </div>
+                    <canvas id="sourceCanvas" class="hidden"></canvas>
+                    <canvas id="segmentCanvas" class="hidden"></canvas>
+                </div>
+
+                <div class="panel-section" id="segmentControls" style="display: none;">
+                    <h2>2. Segmentation</h2>
+                    <div class="control-group model-selector">
+                        <label for="modelSelect">Segmentation Model</label>
+                        <select id="modelSelect">
+                            <option value="bodypix">BodyPix (People)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="thresholdSlider">Segmentation Threshold</label>
+                        <input type="range" id="thresholdSlider" min="0" max="1" step="0.05" value="0.5">
+                        <span id="thresholdValue">0.5</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="smoothSlider">Smoothing Iterations</label>
+                        <input type="range" id="smoothSlider" min="0" max="10" step="1" value="2">
+                        <span id="smoothValue">2</span>
+                    </div>
+                    <button id="segmentBtn" class="btn btn-primary">Run Segmentation</button>
+                    <div id="segmentStatus" class="status"></div>
+                </div>
+
+                <div class="panel-section" id="contourControls" style="display: none;">
+                    <h2>3. Contour Preview</h2>
+                    <canvas id="contourCanvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Right Panel: 3D Viewer and Settings -->
+            <div class="right-panel">
+                <div class="panel-section">
+                    <h2>4. 3D Preview & Settings</h2>
+                    
+                    <div class="settings-grid">
+                        <div class="control-group">
+                            <label for="heightInput">Extrusion Height (mm)</label>
+                            <input type="number" id="heightInput" value="10" min="5" max="50" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="wallInput">Wall Thickness (mm)</label>
+                            <input type="number" id="wallInput" value="2" min="1" max="5" step="0.5">
+                        </div>
+                        <div class="control-group">
+                            <label for="scaleInput">Scale (%)</label>
+                            <input type="number" id="scaleInput" value="100" min="10" max="500" step="5">
+                        </div>
+                    </div>
+
+                    <div class="control-group scale-calibration">
+                        <label>Scale Calibration</label>
+                        <div class="calibration-row">
+                            <input type="number" id="calibrationPixels" placeholder="Pixels" readonly>
+                            <span>=</span>
+                            <input type="number" id="calibrationMm" placeholder="mm" min="1">
+                            <button id="applyCalibration" class="btn btn-secondary">Apply</button>
+                        </div>
+                        <small>Measure two points on image, enter the real distance in mm</small>
+                    </div>
+
+                    <div id="viewer3d" class="viewer-3d"></div>
+
+                    <div class="action-buttons">
+                        <button id="generateBtn" class="btn btn-primary" disabled>
+                            Generate 3D Model
+                        </button>
+                        <button id="exportBtn" class="btn btn-success" disabled>
+                            📥 Download STL
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="app-footer">
+            <p>Cookie Form Generator • Built with Three.js & TensorFlow.js • Runs entirely in your browser</p>
+        </footer>
+    </div>
+
+    <script src="js/contour.js"></script>
+    <script src="js/geometry.js"></script>
+    <script src="js/stl-exporter.js"></script>
+    <script src="js/viewer.js"></script>
+    <script type="module" src="js/segmentation.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
