@@ -33,7 +33,8 @@ class App {
             'contourCanvas', 'segmentControls', 'contourControls',
             'segmentBtn', 'segmentStatus', 'thresholdSlider', 'smoothSlider',
             'heightInput', 'wallInput', 'scaleInput', 'calibrationPixels',
-            'calibrationMm', 'applyCalibration', 'generateBtn', 'exportBtn', 'viewer3d'
+            'calibrationMm', 'applyCalibration', 'generateBtn', 'exportBtn', 'viewer3d',
+            'drawingCanvas', 'useDrawingBtn', 'clearDrawingBtn'
         ];
 
         ids.forEach(id => {
@@ -47,6 +48,11 @@ class App {
         this.modules.geometryGenerator = new GeometryGenerator();
         this.modules.stlExporter = new STLExporter();
         this.modules.viewer3d = new Viewer3D(this.elements.viewer3d);
+        
+        // Initialize DrawingTools
+        if (typeof DrawingTools !== 'undefined') {
+            DrawingTools.init(this.elements.drawingCanvas);
+        }
     }
 
     bindEvents() {
@@ -103,14 +109,6 @@ class App {
             this.updateCalibration();
         });
 
-        // Preset size buttons
-        document.querySelectorAll('.preset-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const targetMm = parseFloat(e.target.dataset.scale);
-                this.applyPresetSize(targetMm);
-            });
-        });
-
         // Slider inputs
         this.elements.thresholdSlider.addEventListener('input', () => {
             this.extractContours();
@@ -119,6 +117,80 @@ class App {
         this.elements.smoothSlider.addEventListener('input', () => {
             this.extractContours();
         });
+        
+        // Drawing tool buttons
+        const toolButtons = document.querySelectorAll('.tool-btn');
+        toolButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tool = e.target.dataset.tool;
+                this.selectDrawingTool(tool);
+            });
+        });
+        
+        // Use drawing button
+        this.elements.useDrawingBtn.addEventListener('click', () => {
+            this.useDrawingShape();
+        });
+        
+        // Clear drawing button
+        this.elements.clearDrawingBtn.addEventListener('click', () => {
+            DrawingTools.clearShapes();
+            this.elements.useDrawingBtn.disabled = true;
+            this.deselectAllTools();
+        });
+    }
+    
+    selectDrawingTool(tool) {
+        // Update UI
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tool="${tool}"]`).classList.add('active');
+        
+        // Set drawing mode
+        DrawingTools.setMode(tool);
+    }
+    
+    deselectAllTools() {
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        DrawingTools.setMode('none');
+    }
+    
+    useDrawingShape() {
+        const contour = DrawingTools.getShapeAsContour();
+        if (contour.length === 0) {
+            this.showError('No shape drawn. Please draw a shape first.');
+            return;
+        }
+        
+        // Convert drawing contour to the format expected by the app
+        this.state.currentContours = [contour];
+        
+        // Draw the contour to contour canvas for preview
+        const canvas = this.elements.contourCanvas;
+        const ctx = canvas.getContext('2d');
+        canvas.width = this.elements.drawingCanvas.width;
+        canvas.height = this.elements.drawingCanvas.height;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#4a90d9';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        if (contour.length > 0) {
+            ctx.moveTo(contour[0].x, contour[0].y);
+            for (let i = 1; i < contour.length; i++) {
+                ctx.lineTo(contour[i].x, contour[i].y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+        
+        this.elements.contourControls.style.display = 'block';
+        this.elements.generateBtn.disabled = false;
+        this.setStatus('Drawing shape ready. Click "Generate 3D Model" to preview.', 'success');
     }
 
     handleImageUpload(file) {
@@ -226,76 +298,9 @@ class App {
         }
     }
 
-
-    /**
-     * Calculate bounding box diagonal of contour
-     * @param {Array} contour - Array of {x, y} points
-     * @returns {number} Diagonal length in pixels
-     */
-    estimateContourSize(contour) {
-        if (!contour || contour.length === 0) {
-            return 0;
-        }
-        
-        let minX = contour[0].x;
-        let maxX = contour[0].x;
-        let minY = contour[0].y;
-        let maxY = contour[0].y;
-        
-        for (let i = 1; i < contour.length; i++) {
-            const p = contour[i];
-            minX = Math.min(minX, p.x);
-            maxX = Math.max(maxX, p.x);
-            minY = Math.min(minY, p.y);
-            maxY = Math.max(maxY, p.y);
-        }
-        
-        const width = maxX - minX;
-        const height = maxY - minY;
-        return Math.sqrt(width * width + height * height);
-    }
-
-    /**
-     * Calculate scale percentage for target size
-     * @param {number} targetMm - Target size in mm (50, 70, or 100)
-     */
-    applyPresetSize(targetMm) {
-        if (!this.state.currentContours || this.state.currentContours.length === 0) {
-            this.showError('No contours available. Run segmentation first.');
-            return;
-        }
-        
-        // Get the largest contour
-        const largestContour = this.state.currentContours[0];
-        const currentPixels = this.estimateContourSize(largestContour);
-        
-        if (currentPixels === 0) {
-            this.showError('Could not estimate contour size');
-            return;
-        }
-        
-        // Calculate current mm size using pixelsPerMm (pixels per mm)
-        // If not calibrated, assume 1 pixel = 1 mm
-        const pixelsPerMm = this.state.pixelsPerMm || 1;
-        const currentMm = currentPixels / pixelsPerMm;
-        
-        // Calculate scale factor to reach target size
-        const scaleFactor = (targetMm / currentMm) * 100;
-        
-        // Update scale input
-        this.elements.scaleInput.value = Math.round(scaleFactor);
-        
-        // Trigger re-render if geometry exists
-        if (this.state.currentGeometry) {
-            this.generate3DModel();
-        }
-        
-        this.setStatus('Scale set to ' + Math.round(scaleFactor) + '% for ~' + targetMm + 'mm target', 'success');
-    }
-
     generate3DModel() {
         if (!this.state.currentContours || this.state.currentContours.length === 0) {
-            this.showError('No contours available. Run segmentation first.');
+            this.showError('No contours available. Run segmentation or draw a shape first.');
             return;
         }
 

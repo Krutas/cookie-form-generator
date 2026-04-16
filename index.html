@@ -62,6 +62,22 @@
                     <h2>3. Contour Preview</h2>
                     <canvas id="contourCanvas"></canvas>
                 </div>
+
+                <!-- Drawing Panel: Custom Shape Drawing -->
+                <div class="panel-section drawing-panel">
+                    <h2>OR: Draw Shape</h2>
+                    
+                    <div class="drawing-tools">
+                        <button class="tool-btn" data-tool="circle" title="Circle">⭕ Circle</button>
+                        <button class="tool-btn" data-tool="rectangle" title="Rectangle">◻️ Rectangle</button>
+                        <button class="tool-btn" data-tool="freehand" title="Freehand">✍️ Freehand</button>
+                    </div>
+                    
+                    <canvas id="drawingCanvas" width="400" height="400"></canvas>
+                    
+                    <button id="useDrawingBtn" class="btn btn-primary" disabled>Use This Shape</button>
+                    <button id="clearDrawingBtn" class="btn btn-secondary">Clear</button>
+                </div>
             </div>
 
             <!-- Right Panel: 3D Viewer and Settings -->
@@ -118,6 +134,7 @@
     <script src="js/geometry.js"></script>
     <script src="js/stl-exporter.js"></script>
     <script src="js/viewer.js"></script>
+    <script src="js/drawing.js"></script>
     <script type="module" src="js/segmentation.js"></script>
     <script type="module" src="js/app.js"></script>
 </body>

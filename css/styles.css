@@ -393,3 +393,49 @@ canvas {
 .drawing-panel .btn {
     margin-right: 10px;
 }
+
+/* Contour List Styles */
+.contour-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background: var(--bg-color);
+}
+
+.contour-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.contour-item:last-child {
+    border-bottom: none;
+}
+
+.contour-item:hover {
+    background-color: rgba(74, 144, 217, 0.1);
+}
+
+.contour-item.selected {
+    background-color: #e3f2fd;
+}
+
+.contour-item input[type="checkbox"] {
+    margin-right: 12px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.contour-item label {
+    flex: 1;
+    margin-bottom: 0;
+    cursor: pointer;
+    font-weight: normal;
+    color: var(--text-color);
+}
