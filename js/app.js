@@ -6,6 +6,7 @@
 class App {
     constructor() {
         this.state = {
+            selectedContourIndices: [],
             currentImage: null,
             currentContours: null,
             currentGeometry: null,
@@ -292,6 +293,9 @@ class App {
             );
 
             this.setStatus('Found ' + contours.length + ' contour(s). Ready to generate 3D model.', 'success');
+
+            // Render contour selection list
+            this.renderContourList(contours);
         } catch (error) {
             console.error('Contour extraction error:', error);
             this.showError('Contour extraction failed: ' + error.message);
@@ -388,9 +392,69 @@ class App {
         this.setStatus(message, 'error');
         console.error(message);
     }
+
+    renderContourList(contours) {
+        const listContainer = this.elements.contourList;
+        if (!listContainer) return;
+        listContainer.innerHTML = "";
+        if (contours.length === 0) {
+            listContainer.innerHTML = "<p>No contours found.</p>";
+            this.elements.contourSelectControls.style.display = "none";
+            return;
+        }
+        this.elements.contourSelectControls.style.display = "block";
+        contours.forEach((contour, index) => {
+            const item = document.createElement("div");
+            item.className = "contour-item";
+            item.dataset.index = index;
+            const area = this.estimateContourArea(contour);
+            const checkbox = item.querySelector("input");
+            checkbox.addEventListener("change", () => this.updateSelectedContours());
+            listContainer.appendChild(item);
+        });
+        const firstCheckbox = listContainer.querySelector("input[type=\"checkbox\"]");
+        if (firstCheckbox) {
+            firstCheckbox.checked = true;
+            this.updateSelectedContours();
+        }
+    }
+
+    estimateContourArea(contour) {
+        if (!contour || contour.length === 0) return 0;
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const point of contour) {
+            minX = Math.min(minX, point.x);
+            minY = Math.min(minY, point.y);
+            maxX = Math.max(maxX, point.x);
+            maxY = Math.max(maxY, point.y);
+        }
+        return Math.round((maxX - minX) * (maxY - minY));
+    }
+
+    updateSelectedContours() {
+        const checkboxes = this.elements.contourList.querySelectorAll("input[type=\"checkbox\"]:checked");
+        this.state.selectedContourIndices = Array.from(checkboxes).map(cb => parseInt(cb.value));
+        if (this.elements.combineBtn) {
+            this.elements.combineBtn.disabled = this.state.selectedContourIndices.length === 0;
+        }
+    }
+
+    combineSelectedContours() {
+        if (!this.state.currentContours || this.state.selectedContourIndices.length === 0) {
+            this.showError("Please select at least one contour.");
+            return;
+        }
+        const selectedContours = this.state.selectedContourIndices.map(i => this.state.currentContours[i]);
+        const height = parseFloat(this.elements.heightInput.value);
+        const wallThickness = parseFloat(this.elements.wallInput.value);
+        const scale = parseFloat(this.elements.scaleInput.value) / 100 * this.state.pixelScale;
+        this.modules.viewer.renderMultiContour(selectedContours, { height: height, wallThickness: wallThickness, scale: scale });
+        this.setStatus("Rendering " + selectedContours.length + " contour(s) in 3D viewer.", "success");
+    }
 }
 
 // Initialize application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
 });
+            item.innerHTML = "<input type=\"checkbox\" id=\"contour-" + index + "\" value=\"" + index + "\"><label for=\"contour-" + index + "\">Contour " + (index + 1) + " (~" + area + " px\\u00b2)</label>";
