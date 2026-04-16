@@ -17,6 +17,9 @@ class Viewer3D {
         
         // Default camera position
         this.defaultCameraPosition = { x: 0, y: 0, z: 100 };
+        
+        // Initialize immediately
+        this.initialize();
     }
 
     /**
@@ -120,6 +123,91 @@ class Viewer3D {
     }
 
     /**
+     * Render multiple contours as a group of meshes
+     * @param {Array} contours - Array of contour point arrays
+     */
+    renderMultiContour(contours) {
+        // Remove existing meshes
+        this.clearGeometry();
+        
+        if (!contours || contours.length === 0) return;
+        
+        // Create a group to hold all contour meshes
+        const group = new THREE.Group();
+        
+        // Material for all meshes
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x3b82f6,
+            shininess: 100,
+            side: THREE.DoubleSide
+        });
+        
+        // Create a simple shape for each contour
+        contours.forEach((contour, index) => {
+            if (contour.length < 3) return;
+            
+            // Create shape from contour points
+            const shape = new THREE.Shape();
+            
+            // Start at first point
+            shape.moveTo(contour[0].x, -contour[0].y);
+            
+            // Add line to each subsequent point
+            for (let i = 1; i < contour.length; i++) {
+                shape.lineTo(contour[i].x, -contour[i].y);
+            }
+            
+            // Close the shape
+            shape.closePath();
+            
+            // Create geometry from shape (flat)
+            const shapeGeometry = new THREE.ShapeGeometry(shape);
+            
+            // Create mesh
+            const mesh = new THREE.Mesh(shapeGeometry, material);
+            mesh.position.z = index * 2; // Slight offset in Z to prevent z-fighting
+            group.add(mesh);
+            
+            // Add wireframe for each contour
+            const wireframe = new THREE.WireframeGeometry(shapeGeometry);
+            const wireframeMaterial = new THREE.LineBasicMaterial({
+                color: 0x1e40af,
+                linewidth: 1
+            });
+            const wireframeMesh = new THREE.LineSegments(wireframe, wireframeMaterial);
+            wireframeMesh.position.z = index * 2;
+            group.add(wireframeMesh);
+        });
+        
+        // Add group to scene
+        this.scene.add(group);
+        this.currentMesh = group;
+        
+        // Calculate bounding box for the group
+        const boundingBox = new THREE.Box3().setFromObject(group);
+        const center = new THREE.Vector3();
+        boundingBox.getCenter(center);
+        
+        // Center the group
+        group.position.sub(center);
+        
+        // Create a buffer geometry from the group's children for camera fitting
+        const tempGeometry = new THREE.BufferGeometry();
+        const groupSize = new THREE.Vector3();
+        boundingBox.getSize(groupSize);
+        
+        // Fit camera to the group bounds
+        const maxDim = Math.max(groupSize.x, groupSize.y, groupSize.z);
+        const fov = this.camera.fov * (Math.PI / 180);
+        const cameraZ = Math.abs(maxDim / Math.sin(fov / 2)) * 1.5;
+        
+        this.camera.position.z = cameraZ;
+        this.defaultCameraPosition.z = cameraZ;
+        this.camera.updateProjectionMatrix();
+        this.controls.update();
+    }
+
+    /**
      * Adjust camera to fit the geometry
      * @param {THREE.BufferGeometry} geometry - The geometry to fit
      */
@@ -145,8 +233,18 @@ class Viewer3D {
     clearGeometry() {
         if (this.currentMesh) {
             this.scene.remove(this.currentMesh);
-            this.currentMesh.geometry.dispose();
-            this.currentMesh.material.dispose();
+            
+            // Handle both single mesh and group
+            if (this.currentMesh.isGroup) {
+                this.currentMesh.children.forEach(child => {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) child.material.dispose();
+                });
+            } else {
+                if (this.currentMesh.geometry) this.currentMesh.geometry.dispose();
+                if (this.currentMesh.material) this.currentMesh.material.dispose();
+            }
+            
             this.currentMesh = null;
         }
         
