@@ -11,36 +11,32 @@ cookie-form-generator/
 ├── css/
 │   └── styles.css          # Application styles and layout
 ├── js/
-│   ├── app.js              # Main application logic and event handling
+│   ├── app.js              # Main application logic
 │   ├── segmentation.js     # TensorFlow.js BodyPix integration
-│   ├── segmentation-models.js  # Model registry for multiple segmentation backends
-│   ├── contour.js          # Contour extraction algorithms (marching squares)
-│   ├── geometry.js         # 3D geometry generation from 2D contours
-│   ├── drawing.js          # Custom shape drawing tools (circles, rectangles)
-│   ├── stl-exporter.js     # Binary STL file export functionality
-│   └── viewer.js           # Three.js 3D viewer and rendering
+│   ├── segmentation-models.js  # Model registry
+│   ├── contour.js          # Contour extraction algorithms
+│   ├── geometry.js         # 3D geometry generation
+│   ├── drawing.js          # Custom shape drawing tools
+│   ├── stl-exporter.js     # Binary STL file export
+│   └── viewer.js           # Three.js 3D viewer
 └── docs/
-    ├── screenshot.png        # Documentation assets
-    └── superpowers/
-        └── plans/            # Implementation plans
+    └── screenshot.png        # Documentation assets
 ```
 
 **Module Responsibilities**:
-- `app.js` - UI event handling, application state management
-- `viewer.js` - Three.js 3D rendering and scene management
-- `geometry.js` - 3D mesh generation and extrusion operations
-- `contour.js` - Image processing, contour detection and hierarchy analysis
-- `drawing.js` - Canvas-based shape drawing (circles, rectangles, freehand)
-- `segmentation.js` & `segmentation-models.js` - AI model loading and image segmentation
-- `stl-exporter.js` - Binary STL file generation for 3D printing
-
-Keep logic separated by responsibility. Each file should have one clear purpose.
+- \`app.js\` - UI event handling, application state management
+- \`viewer.js\` - Three.js 3D rendering
+- \`geometry.js\` - 3D mesh generation
+- \`contour.js\` - Image processing, contour detection
+- \`drawing.js\` - Canvas-based shape drawing
+- \`segmentation.js\` & \`segmentation-models.js\` - AI model loading
+- \`stl-exporter.js\` - Binary STL file generation
 
 ## Development Commands
 
 This project requires no build step. Run locally using any static file server:
 
-```bash
+\`\`\`bash
 # Python 3
 python -m http.server 8000
 
@@ -49,85 +45,55 @@ npx serve .
 
 # PHP
 php -S localhost:8000
-```
+\`\`\`
 
-Then open `http://localhost:8000` in a browser.
+Then open \`http://localhost:8000\` in a browser.
 
 ## Coding Style & Naming Conventions
 
 - **Indentation**: 4 spaces (no tabs)
 - **Quotes**: Prefer single quotes for strings
-- **Naming**: `camelCase` for variables and functions, `PascalCase` for classes
-- **Constants**: `UPPER_SNAKE_CASE` for true constants (e.g., `DEFAULT_HEIGHT = 10`)
+- **Naming**: \`camelCase\` for variables and functions, \`PascalCase\` for classes
+- **Constants**: \`UPPER_SNAKE_CASE\` for true constants
 - **Semicolons**: Use semicolons to terminate statements
-- **Line length**: Aim for ~100 characters, but don't obsessively break lines
-
-**Example**:
-```javascript
-const MIN_CONTOUR_AREA = 100;
-
-function extractContours(maskData, width, height) {
-    const contours = [];
-    // ... logic here ...
-    return contours.filter(c => calculateArea(c) > MIN_CONTOUR_AREA);
-}
-```
 
 ## Testing Guidelines
 
-This project currently has no automated test suite. Manual testing checklist:
-
-### Core Features
-1. **Image upload** - JPG, PNG, WebP via drag-drop and file picker
-2. **Segmentation** - Threshold adjustment (0.0–1.0 range) with model selection
-3. **Contour extraction** - Single and multiple contour detection
-4. **3D preview** - Height, thickness, and scale adjustments
-5. **STL export** - Downloaded files load correctly in 3D slicers
-
-### New Features (Test Each)
-- **Multiple contours** - Select multiple shapes from one image
-- **Drawing tools** - Draw circles and rectangles on canvas
-- **Size presets** - Cookie (50mm), Biscuit (70mm), Large (100mm) buttons
-- **Inner cutouts** - Donut/hole shapes (when enabled)
-
-**Browser Support**: Chrome, Firefox, Safari with WebGL enabled.
+Manual testing checklist:
+1. Image upload - JPG, PNG, WebP via drag-drop
+2. Segmentation - Threshold adjustment
+3. Multiple contour selection
+4. 3D preview and STL export
+5. Drawing tools - circles and rectangles
+6. Inner cutouts (donut shapes)
+7. Size presets - Cookie, Biscuit, Large buttons
 
 ## Commit & Pull Request Guidelines
 
-**Commit Messages**: Use clear, descriptive messages in present tense:
+**Commit Messages**: Use clear, descriptive messages:
 
-```
+\`\`\`
 feat: add multiple contour selection
-fix: resolve contour smoothing for small images  
+fix: resolve contour smoothing
 docs: update README with new features
-refactor: extract segmentation models to separate module
-```
-
-**Pull Requests**: 
-- Include a concise description of changes
-- Reference related issues with `Fixes #123`
-- Verify the app loads without console errors
-- Test full workflow: upload → segment → generate → export
+\`\`\`
 
 ## Agent-Specific Instructions
 
-When modifying code:
-
-- **No build tools**: Do not add npm, webpack, or build pipelines. The app must run directly by opening `index.html`.
-- **CDN dependencies**: External libraries (Three.js, TensorFlow.js) are loaded via CDN in `index.html`. Do not install via npm.
-- **Browser APIs**: Use modern but widely-supported APIs. Avoid experimental features.
-- **Canvas operations**: Be mindful of memory leaks when working with `ImageData` and Canvas contexts—always dereference large buffers when done.
-- **ES6 modules**: New files can use `import/export` if needed; add `type="module"` to script tags.
+- **No build tools**: Do not add npm, webpack, or build pipelines
+- **CDN dependencies**: Libraries loaded via CDN, do not install via npm
+- **Browser APIs**: Use widely-supported APIs, avoid experimental features
+- **ES6 modules**: New files can use \`import/export\` if needed
 
 ## Feature Implementation Status
 
-| Feature | Status | Files Modified |
-|---------|--------|----------------|
-| Image Upload & Segmentation | ✅ Complete | `js/segmentation.js`, `index.html` |
-| Single Contour Extraction | ✅ Complete | `js/contour.js` |
-| 3D Preview & Export | ✅ Complete | `js/viewer.js`, `js/geometry.js`, `js/stl-exporter.js` |
-| Multiple Contour Selection | 🔄 In Progress | `js/contour.js`, `js/app.js`, `js/viewer.js` |
-| Custom Shape Drawing | 🔄 In Progress | `js/drawing.js` (new), `index.html` |
-| Inner Cutouts (Donuts) | 🔄 In Progress | `js/contour.js`, `js/geometry.js` |
-| Additional Segmentation Models | 🔄 In Progress | `js/segmentation-models.js` (new) |
-| Preset Size Templates | ✅ Complete | `js/app.js`, `index.html`, `css/styles.css` |
+| Feature | Status |
+|---------|--------|
+| Image Upload & Segmentation | ✅ Complete |
+| Single Contour Extraction | ✅ Complete |
+| 3D Preview & Export | ✅ Complete |
+| Multiple Contour Selection | ✅ Complete |
+| Custom Shape Drawing | ✅ Complete |
+| Inner Cutouts (Donuts) | ✅ Complete |
+| Additional Segmentation Models | ✅ Complete |
+| Preset Size Templates | ✅ Complete |
