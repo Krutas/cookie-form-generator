@@ -32,7 +32,7 @@ class ContourExtractor {
                 // Look for edge pixels (background to foreground transition)
                 if (mask[idx] === 1 && mask[idx - 1] === 0 && visited[idx] === 0) {
                     const contour = this.traceContour(mask, width, height, x, y, visited);
-                    if (contour.length >= 10) {
+                    if (contour.length >= 10 && this.calculateArea(contour) >= 100) {
                         contours.push(contour);
                     }
                 }
@@ -118,14 +118,14 @@ class ContourExtractor {
                 // Outer boundary: foreground to background (going right)
                 if (mask[idx] === 1 && mask[idx - 1] === 0 && visited[idx] === 0) {
                     const contour = this.traceContourFull(mask, width, height, x, y, visited, true);
-                    if (contour.length >= 10) {
+                    if (contour.length >= 10 && this.calculateArea(contour) >= 100) {
                         contours.push(contour);
                     }
                 }
                 // Inner boundary: background to foreground (going right) - hole
                 else if (mask[idx] === 0 && mask[idx - 1] === 1 && visited[idx] === 0) {
                     const contour = this.traceContourFull(mask, width, height, x, y, visited, false);
-                    if (contour.length >= 10) {
+                    if (contour.length >= 10 && this.calculateArea(contour) >= 100) {
                         contours.push(contour);
                     }
                 }
