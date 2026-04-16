@@ -11,10 +11,12 @@ const DrawingTools = {
     canvas: null,
     ctx: null,
     shapes: [],
+    onShapeComplete: null,
 
-    init(canvas) {
+    init(canvas, onShapeComplete) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
+        this.onShapeComplete = onShapeComplete || null;
         this.setupEventListeners();
     },
 
@@ -65,6 +67,11 @@ const DrawingTools = {
         
         this.currentShape = null;
         this.renderAll();
+        
+        // Notify app that a shape is complete
+        if (this.onShapeComplete) {
+            this.onShapeComplete();
+        }
     },
 
     cancelDraw() {
@@ -118,6 +125,10 @@ const DrawingTools = {
     clearShapes() {
         this.shapes = [];
         this.clearCanvas();
+    },
+
+    hasShapes() {
+        return this.shapes.length > 0;
     },
 
     getShapeAsContour() {

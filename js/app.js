@@ -51,7 +51,7 @@ class App {
         
         // Initialize DrawingTools
         if (typeof DrawingTools !== 'undefined') {
-            DrawingTools.init(this.elements.drawingCanvas);
+            DrawingTools.init(this.elements.drawingCanvas, () => { this.elements.useDrawingBtn.disabled = false; });
         }
     }
 
