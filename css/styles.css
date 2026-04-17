@@ -522,3 +522,39 @@ canvas {
     font-weight: normal;
     color: var(--text-color);
 }
+
+/* Upload Area Improvements */
+.upload-divider {
+    display: flex;
+    align-items: center;
+    margin: 15px 0;
+    color: var(--text-muted);
+}
+
+.upload-divider::before,
+.upload-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.upload-divider span {
+    padding: 0 15px;
+    font-size: 0.9rem;
+}
+
+#browseBtn {
+    margin: 10px 0;
+}
+
+.upload-area small {
+    display: block;
+    margin-top: 10px;
+}
+
+/* Better drag feedback */
+.upload-area.dragover {
+    border-color: var(--primary-color);
+    background: rgba(74, 144, 217, 0.1);
+    transform: scale(1.02);
+}

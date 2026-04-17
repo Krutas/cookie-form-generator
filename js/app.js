@@ -30,7 +30,7 @@ class App {
 
     cacheElements() {
         const ids = [
-            'uploadArea', 'imageInput', 'sourceCanvas', 'segmentCanvas',
+            'uploadArea', 'imageInput', 'browseBtn', 'sourceCanvas', 'segmentCanvas',
             'contourCanvas', 'segmentControls', 'contourControls',
             'segmentBtn', 'segmentStatus', 'thresholdSlider', 'smoothSlider',
             'heightInput', 'wallInput', 'scaleInput', 'calibrationPixels',
@@ -58,18 +58,33 @@ class App {
 
     bindEvents() {
         // Image upload - drag and drop
+        // Fix dragenter event for proper drag state tracking
+        let dragCounter = 0;
+
+        this.elements.uploadArea.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            dragCounter++;
+            this.elements.uploadArea.classList.add('dragover');
+        });
+
         this.elements.uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             this.elements.uploadArea.classList.add('dragover');
         });
 
-        this.elements.uploadArea.addEventListener('dragleave', () => {
-            this.elements.uploadArea.classList.remove('dragover');
+        this.elements.uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dragCounter--;
+            if (dragCounter <= 0) {
+                this.elements.uploadArea.classList.remove('dragover');
+                dragCounter = 0;
+            }
         });
 
         this.elements.uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             this.elements.uploadArea.classList.remove('dragover');
+
             
             const files = e.dataTransfer.files;
             if (files.length > 0 && files[0].type.startsWith('image/')) {
@@ -80,7 +95,16 @@ class App {
         });
 
         // Image upload - click
-        this.elements.uploadArea.addEventListener('click', () => {
+        this.elements.uploadArea.addEventListener('click', (e) => {
+            // Prevent triggering when clicking the browse button itself
+            if (e.target.id !== 'browseBtn') {
+                this.elements.imageInput.click();
+            }
+        });
+
+        // Browse button click
+        this.elements.browseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             this.elements.imageInput.click();
         });
 
@@ -408,6 +432,7 @@ class App {
             item.className = "contour-item";
             item.dataset.index = index;
             const area = this.estimateContourArea(contour);
+            item.innerHTML = '<input type="checkbox" id="contour-' + index + '" value="' + index + '"><label for="contour-' + index + '">Contour ' + (index + 1) + ' (~' + area + ' px\u00b2)</label>';
             const checkbox = item.querySelector("input");
             checkbox.addEventListener("change", () => this.updateSelectedContours());
             listContainer.appendChild(item);
@@ -457,4 +482,3 @@ class App {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
 });
-            item.innerHTML = "<input type=\"checkbox\" id=\"contour-" + index + "\" value=\"" + index + "\"><label for=\"contour-" + index + "\">Contour " + (index + 1) + " (~" + area + " px\\u00b2)</label>";
